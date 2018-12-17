@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+    xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.0.0"
+    xmlns:cxf="http://camel.apache.org/schema/blueprint/cxf"
+    xmlns:fin="http://schemas.datacontract.org/2004/07/FinoAPI.Models"
+    xmlns:http-conf="http://cxf.apache.org/transports/http/configuration"
+    xmlns:sec="http://cxf.apache.org/configuration/security"
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap"
+    xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding"
+    xmlns:tns="http://tempuri.org/"
+    xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing"
+    xmlns:wsap="http://schemas.xmlsoap.org/ws/2004/08/addressing/policy"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.osgi.org/xmlns/blueprint/v1.0.0 https://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd                                    http://camel.apache.org/schema/blueprint http://camel.apache.org/schema/blueprint/camel-blueprint.xsd">
+    <cxf:cxfEndpoint
+        address="http://203.123.134.135/PayFino/Service/Service1.svc"
+        id="soaptesting" wsdlURL="test.wsdl" xmlns:s="http://tempuri.org"/>
+    <http-conf:conduit name="*.http-conduit">
+        <http-conf:tlsClientParameters>
+            <sec:cipherSuitesFilter>
+                <sec:include>.*_EXPORT_.*</sec:include>
+                <sec:include>.*_EXPORT1024_.*</sec:include>
+                <sec:include>.*_WITH_DES_.*</sec:include>
+                <sec:include>.*_WITH_AES_.*</sec:include>
+                <sec:include>.*_WITH_NULL_.*</sec:include>
+                <sec:exclude>.*_DH_anon_.*</sec:exclude>
+            </sec:cipherSuitesFilter>
+        </http-conf:tlsClientParameters>
+        <http-conf:client AllowChunking="true" AutoRedirect="true"
+            CacheControl="No-Cache" ConnectionTimeout="60000" ReceiveTimeout="60000"/>
+    </http-conf:conduit>
+    <camelContext id="_SoapTesting" streamCache="true" trace="true"
+        useMDCLogging="true"
+        xmlns="http://camel.apache.org/schema/blueprint"
+        xmlns:fin="http://schemas.datacontract.org/2004/07/FinoAPI.Models"
+        xmlns:i="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"
+        xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+        xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/"
+        xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
+        xmlns:tns="http://tempuri.org/"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <route id="_soaproute1">
+            <!-- <setHeader headerName="Content-Type">
+	      <simple>text/xml;charset=UTF-8</simple>
+	      </setHeader> -->
+            <from id="_from1" uri="timer://foo?repeatCount=1"/>
+            <!--      <setHeader headerName="Accept">
+	      <simple>application/xml</simple>
+	      </setHeader> -->
+            <!-- <setBody>
+	      <simple>
+	      &lt;soapenv:Envelope
+   xmlns:soapenv=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;
+   xmlns:tem=&quot;http://tempuri.org/&quot;
+   xmlns:fin=&quot;http://schemas.datacontract.org/2004/07/FinoAPI.Models&quot;&gt;
+   &lt;soapenv:Header/&gt;
+   &lt;soapenv:Body&gt;
+       &lt;tem:GetContractDetails&gt;
+           &lt;tem:oInputContractModel&gt;
+               &lt;fin:ContractNo&gt;635744&lt;/fin:ContractNo&gt;
+               &lt;fin:CustName&gt;&lt;/fin:CustName&gt;
+               &lt;fin:pin&gt;/&lt;/fin:pin&gt;
+           &lt;/tem:oInputContractModel&gt;
+       &lt;/tem:GetContractDetails&gt;
+   &lt;/soapenv:Body&gt;
+&lt;/soapenv:Envelope&gt; 
+</simple>
+	      </setBody>  -->
+            <from id="_from1" uri="timer://foo?repeatCount=1"/>	
+      <to uri="http://sandbox.itspe.co.in/tis/api/rest/atcs/getTransportLinkStaticData.php?licence=ccT0F804bU8093N3900I5ff4Sfe49Ob58aS3b&amp;client=LnT"/>
+      <setHeader headerName="ParticipantRef">
+      <constant>LnT</constant>
+      </setHeader>
+      <!-- <convertBodyTo type="java.lang.String"/> -->
+		<log id="_log" message="**********************************************After to endpoint is set   :BODY: ${body}"/>			
+            
+        </route>
+    </camelContext>
+</blueprint>

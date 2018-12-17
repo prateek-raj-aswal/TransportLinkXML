@@ -1,0 +1,15 @@
+<soapenv:Envelope
+   xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+   xmlns:tem="http://tempuri.org/"
+   xmlns:fin="http://schemas.datacontract.org/2004/07/FinoAPI.Models">
+   <soapenv:Header/>
+   <soapenv:Body>
+       <tem:GetContractDetails>
+           <tem:oInputContractModel>
+               <fin:ContractNo>635744</fin:ContractNo>
+               <fin:CustName></fin:CustName>
+               <fin:pin>/</fin:pin>
+           </tem:oInputContractModel>
+       </tem:GetContractDetails>
+   </soapenv:Body>
+</soapenv:Envelope>
