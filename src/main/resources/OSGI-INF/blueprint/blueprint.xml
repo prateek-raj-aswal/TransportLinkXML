@@ -11,71 +11,42 @@
     xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing"
     xmlns:wsap="http://schemas.xmlsoap.org/ws/2004/08/addressing/policy"
     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.osgi.org/xmlns/blueprint/v1.0.0 https://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd                                    http://camel.apache.org/schema/blueprint http://camel.apache.org/schema/blueprint/camel-blueprint.xsd">
-    <cxf:cxfEndpoint
-        address="http://203.123.134.135/PayFino/Service/Service1.svc"
-        id="soaptesting" wsdlURL="test.wsdl" xmlns:s="http://tempuri.org"/>
-    <http-conf:conduit name="*.http-conduit">
-        <http-conf:tlsClientParameters>
-            <sec:cipherSuitesFilter>
-                <sec:include>.*_EXPORT_.*</sec:include>
-                <sec:include>.*_EXPORT1024_.*</sec:include>
-                <sec:include>.*_WITH_DES_.*</sec:include>
-                <sec:include>.*_WITH_AES_.*</sec:include>
-                <sec:include>.*_WITH_NULL_.*</sec:include>
-                <sec:exclude>.*_DH_anon_.*</sec:exclude>
-            </sec:cipherSuitesFilter>
-        </http-conf:tlsClientParameters>
-        <http-conf:client AllowChunking="true" AutoRedirect="true"
-            CacheControl="No-Cache" ConnectionTimeout="60000" ReceiveTimeout="60000"/>
-    </http-conf:conduit>
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.osgi.org/xmlns/blueprint/v1.0.0 https://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd                                         http://camel.apache.org/schema/blueprint http://camel.apache.org/schema/blueprint/camel-blueprint.xsd">
     <camelContext id="_SoapTesting" streamCache="true" trace="true"
-        useMDCLogging="true"
-        xmlns="http://camel.apache.org/schema/blueprint"
-        xmlns:fin="http://schemas.datacontract.org/2004/07/FinoAPI.Models"
-        xmlns:i="http://www.w3.org/2001/XMLSchema-instance"
-        xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"
-        xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
-        xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/"
-        xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
-        xmlns:tns="http://tempuri.org/"
-        xmlns:xs="http://www.w3.org/2001/XMLSchema"
-        xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        useMDCLogging="true" xmlns="http://camel.apache.org/schema/blueprint">
+        <dataFormats>
+            <json id="jackson" library="Jackson" prettyPrint="true"/>
+            <!-- <json id="gson" prettyPrint="true" library="Gson"/> -->
+            <xmljson expandableProperties="d e"
+                forceTopLevelObject="true" id="xmljsonWithOptions"
+                removeNamespacePrefixes="true" rootName="newRoot"
+                skipNamespaces="true" trimSpaces="true"/>
+        </dataFormats>
         <route id="_soaproute1">
-            <!-- <setHeader headerName="Content-Type">
-	      <simple>text/xml;charset=UTF-8</simple>
-	      </setHeader> -->
-            <from id="_from1" uri="timer://foo?repeatCount=1"/>
-            <!--      <setHeader headerName="Accept">
-	      <simple>application/xml</simple>
-	      </setHeader> -->
-            <!-- <setBody>
-	      <simple>
-	      &lt;soapenv:Envelope
-   xmlns:soapenv=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;
-   xmlns:tem=&quot;http://tempuri.org/&quot;
-   xmlns:fin=&quot;http://schemas.datacontract.org/2004/07/FinoAPI.Models&quot;&gt;
-   &lt;soapenv:Header/&gt;
-   &lt;soapenv:Body&gt;
-       &lt;tem:GetContractDetails&gt;
-           &lt;tem:oInputContractModel&gt;
-               &lt;fin:ContractNo&gt;635744&lt;/fin:ContractNo&gt;
-               &lt;fin:CustName&gt;&lt;/fin:CustName&gt;
-               &lt;fin:pin&gt;/&lt;/fin:pin&gt;
-           &lt;/tem:oInputContractModel&gt;
-       &lt;/tem:GetContractDetails&gt;
-   &lt;/soapenv:Body&gt;
-&lt;/soapenv:Envelope&gt; 
-</simple>
-	      </setBody>  -->
-            <from id="_from1" uri="timer://foo?repeatCount=1"/>	
-      <to uri="http://sandbox.itspe.co.in/tis/api/rest/atcs/getTransportLinkStaticData.php?licence=ccT0F804bU8093N3900I5ff4Sfe49Ob58aS3b&amp;client=LnT"/>
-      <setHeader headerName="ParticipantRef">
-      <constant>LnT</constant>
-      </setHeader>
-      <!-- <convertBodyTo type="java.lang.String"/> -->
-		<log id="_log" message="**********************************************After to endpoint is set   :BODY: ${body}"/>			
-            
+            <!--   <from id="_from1" uri="timer://foo?repeatCount=1"/> -->
+            <from id="_from1" uri="restlet:http://localhost:9000/getTransportLinkStaticData"/>
+            <removeHeaders id="_removeHeaders1" pattern="*"/>
+            <setHeader headerName="ParticipantRef" id="_setHeader1">
+                <constant>LnT</constant>
+            </setHeader>
+            <to id="_to1" uri="http://sandbox.itspe.co.in/tis/api/rest/atcs/getTransportLinkStaticData.php?licence=ccT0F804bU8093N3900I5ff4Sfe49Ob58aS3b&amp;client=LnT"/>
+            <choice id="_choice1">
+                <when id="_when1">
+                    <simple>${body} == null</simple>
+                    <to id="_to1" uri="http://sandbox.itspe.co.in/tis/api/rest/atcs/getTransportLinkStaticData.php?licence=ccT0F804bU8093N3900I5ff4Sfe49Ob58aS3b&amp;client=LnT"/>
+                </when>
+            </choice>
+            <marshal id="_marshal1" ref="xmljsonWithOptions"/>
+            <log id="_log1" message="\n******************************************\n\n ${body} \n\n\n"/>
+            <removeHeaders id="_removeHeaders2" pattern="*"/>
+            <setHeader headerName="Content-Type" id="_setHeader2">
+                <simple>application/json</simple>
+            </setHeader>
+            <setHeader headerName="CamelRestletResponse" id="_setHeader3">
+                <simple>${body}</simple>
+            </setHeader>
+            <to id="_to2" uri="file:/tmp/?fileName=${date:now:yyyyMMdd}.txt"/>
+            <!-- <log id="_log" message="**********************************************After to endpoint is set   :BODY: ${body}"/> -->
         </route>
     </camelContext>
 </blueprint>
